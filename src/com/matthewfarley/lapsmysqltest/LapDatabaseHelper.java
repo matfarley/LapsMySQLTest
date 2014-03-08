@@ -2,6 +2,7 @@ package com.matthewfarley.lapsmysqltest;
 
 import java.util.Calendar;
 import java.util.Date;
+import java.util.GregorianCalendar;
 
 import android.content.ContentValues;
 import android.content.Context;
@@ -40,40 +41,51 @@ public class LapDatabaseHelper extends SQLiteOpenHelper {
 	
 	//Usually would return a long as an id once finished adding
 	public void insertLap(){
-		ContentValues cv = new ContentValues();
-		cv.put(COLUMN_LAP_START_DATE, getIntDateToday());
+		ContentValues cv = new ContentValues();;
+		cv.put(COLUMN_LAP_START_DATE, new Date().getTime()); //Store date as Millis
 		getWritableDatabase().insert(TABLE_LAP, null, cv);
 		
 		//Toast for Testing only
 		Toast.makeText(mAppContext, "Lap Added " + 
-		    cv.getAsLong(COLUMN_LAP_START_DATE), 
+		    new Date(cv.getAsLong(COLUMN_LAP_START_DATE)), 
 		    Toast.LENGTH_SHORT)
 		    .show();	
 	}
 	
 	//Query DB for number of laps done today
 	public int queryLapsToday(){
+		int count;
 		Cursor results = getReadableDatabase().query(TABLE_LAP,
-				null, COLUMN_LAP_START_DATE + "= " + getIntDateToday(),
+				null, COLUMN_LAP_START_DATE + " BETWEEN " + todayStart() +
+				" AND " + todayEnd(),
 				null, null, null, null);
 		
+		count = results.getCount();	
+		
 		//Toast for Testing only
-		Toast.makeText(mAppContext, "Lap Added " + 
-				results.getCount(), 
+		Toast.makeText(mAppContext, "Laps Added: " + 
+				count, 
 			    Toast.LENGTH_SHORT)
 			    .show();
 		
-		return results.getCount();		
+		results.close();
+		
+		return count;
+			
 	}
 	
-	//Used to get todays date in the format ddmmyyyy
-	public int getIntDateToday(){
-		Calendar c1 = Calendar. getInstance();
-	    StringBuilder sb = new StringBuilder();
-	    sb.append(c1.get(Calendar.YEAR));
-	    sb.append(c1.get(Calendar.MONTH));
-	    sb.append(c1.get(Calendar.DAY_OF_MONTH));
-	    return Integer.parseInt(sb.toString());
+	private long todayStart(){
+		Calendar c = Calendar. getInstance();
+		c.set(Calendar.HOUR_OF_DAY, 0);
+		c.set(Calendar.MINUTE, 0);
+		return c.getTimeInMillis();
+	}
+	
+	private long todayEnd(){
+		Calendar c = Calendar. getInstance();
+		c.set(Calendar.HOUR_OF_DAY, 23);
+		c.set(Calendar.MINUTE, 59);
+		return c.getTimeInMillis();
 	}
 
 }
